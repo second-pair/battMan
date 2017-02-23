@@ -2,9 +2,10 @@
 
 #  Written by Blair Edwards
 #  Created 2017-02-11
-#  Modified 2017-02-14
-#  Simple python script for a software 1:4 demux
+#  Modified 2017-04-13
+#  Simple python script for a software 1:4 demux (can be expanded)
 #  This uses a RPi's GPIO pins
+#  The programme should exit cleanly at any time by sending a ^C interrupt
 
 #  Import Modules
 import RPi.GPIO as GPIO
@@ -24,7 +25,15 @@ GPIO.setup (gpioPin0, GPIO.OUT, initial = GPIO.LOW)
 GPIO.setup (gpioPin1, GPIO.OUT, initial = GPIO.LOW)
 GPIO.setup (gpioPin2, GPIO.OUT, initial = GPIO.LOW)
 GPIO.setup (gpioPin3, GPIO.OUT, initial = GPIO.LOW)
-prevOutVal = -1
+prevOutVal = -1  #  No initial value!
+#  Note about potential future assignments:
+#  The Pi has plenty of available output pins, most of which can be used for
+#    controlling the relay-controlling transistors
+#  Pins 13, 15, 16, 18 were chosen as they're pure IO pins (don't have any
+#    other functions such as the mini-UART), are 4 pins grouped closely and
+#    are protected by the Custard Pi board
+#  If more pins are required, these can be chaged to whatever, but the hardware
+#    circuitry will need to be re-wired to use these pins (should be easy)
 
 
 def selWithKbd ():
@@ -32,6 +41,7 @@ def selWithKbd ():
 	while True:
 		selOutRaw = input ("Which pin would you like to output on?  [0-" + str (relayCount - 1) + "]  ")
 		try:
+			#  Try to capture non-integer input
 			selOut = int (selOutRaw)
 		except:
 			print ("Please enter a valid integer.")
@@ -134,19 +144,17 @@ elif relayCount > 4:
 	print ("\n\nToo many relays!\nIf you want to use more than 4, you will need to hard-code the GPIO addresses, add them to 'setOutput' and then edit here to squelch this code.")
 	cleanup ()
 
-	
 #  Setup ctrl-c capturing
 signal.signal (signal.SIGINT, captureCC)
 
 #  Setup Serial with PC
 port = serial.Serial ("/dev/ttyAMA0", baudrate=9600, timeout=0.1)
 
-
 while True:
+	#  Check which control method the user wants
 	modeSel = input ('Run in Keyboard ("k") or Serial ("s") mode?  ')
 	if modeSel == "k":
 		selWithKbd ()
-#		currTests ()
 	elif modeSel == "s":
 		cycleWithSerial ()
 	else:
